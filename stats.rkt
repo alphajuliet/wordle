@@ -1,10 +1,11 @@
 #lang racket
 
 (require threading
-         rakeda
-         (prefix-in h: hash-ext))
+         racket/hash)
 
 ;;----------------
+;; Utilities
+
 (define (my-string-split s)
   ;; Split a string into 1-char substrings, with no header or trailer
   ;; (my-string-split "abc") => '("a" "b" "c")
@@ -21,8 +22,16 @@
        flatten
        (apply hash)))
 
+; Add the values in two hashes where the keys match. For unmatched keys, include the value.
+;   (hash-add (hash 'a 1 'b 2 'c 3) (hash 'a 4 'b 5)) => (hash 'a 5 'b 7 'c 3)
+; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
+(define (hash-add . hs)
+  (apply hash-union hs #:combine/key (λ (k v1 v2) (+ v1 v2))))
+
 (define (re . elts)
   ;; Create a regexp concatenated from a list of strings
+  ;; e.g. (re x ".." y "s")
+  ;; re :: [String] -> RegExp
   (regexp (string-join elts "")))
 
 ;;----------------
@@ -40,7 +49,7 @@
   (~>> lst
        (map my-string-split)
        (apply map list)
-       (map (r/flip string-join ""))))
+       (map (λ (lst) (string-join lst "")))))
 
 (define (sort-by-key h)
   ;; Sort by ascending key
@@ -57,7 +66,7 @@
   ;; Count each letter in a word
   ;; count-letters :: String -> Hash String Integer
   (foldl (λ (letter h)
-           (h:hash-add h (hash letter 1)))
+           (hash-add h (hash letter 1)))
          (hash)
          (my-string-split word)))
 
@@ -65,7 +74,7 @@
   ;; Rank count of letters in decreasing order across all the words
   ;; count-letters-wordlist :: [String] -> Hash String Integer
   (~> (foldl (λ (word h)
-               (h:hash-add h (count-letters word)))
+               (hash-add h (count-letters word)))
              (hash)
              wordlist)))
 
