@@ -133,6 +133,6 @@
 ;; Historical words
 ;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
 (define h (read-words "wordle-history.txt"))
-(define wh (remove-words w h))
+(define wh (remove-words h w))
 
 ;; The End
