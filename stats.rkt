@@ -1,7 +1,16 @@
 #lang racket
+;; Wordle assistance
+;; 2022-02
 
 (require threading
          racket/hash)
+
+(provide read-words
+         filter-words
+         remove-words
+         rank-words
+         re
+         w wh)
 
 ;;----------------
 ;; Utilities
@@ -99,11 +108,18 @@
              (score ranking pos letter))))
 
 ;;----------------
-(define (filter-wordlist pattern wordlist)
-  ;; filter-wordlist :: RegExp -> [String] -> [String]
+(define (filter-words pattern wordlist)
+  ;; filter-words :: RegExp -> [String] -> [String]
   (filter (curry regexp-match pattern) wordlist))
 
-(define (rank-wordlist wordlist)
+(define (remove-words v w)
+  ;; Remove words in v from w
+  ;; remove-words :: [String] -> [String] -> [String]
+  (let ([vs (list->set v)]
+        [ws (list->set w)])
+    (set->list (set-subtract ws vs))))
+
+(define (rank-words wordlist)
   ;; rank-wordlist :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
     (~>> wordlist
@@ -113,5 +129,10 @@
 
 ;; Pre-load word list
 (define w (read-words "words5-no-plural.txt"))
+
+;; Historical words
+;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
+(define h (read-words "wordle-history.txt"))
+(define wh (remove-words w h))
 
 ;; The End
