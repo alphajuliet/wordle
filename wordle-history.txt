@@ -39,8 +39,10 @@ bribe
 bring
 caulk
 champ
+chant
 cheat
 chill
+choke
 cigar
 civic
 click
@@ -143,6 +145,7 @@ moist
 motor
 moult
 mount
+nasty
 naval
 offal
 other
@@ -183,6 +186,7 @@ robot
 rogue
 rouge
 round
+rupee
 salad
 seedy
 serve
@@ -241,6 +245,7 @@ usher
 using
 viral
 vital
+vivid
 vodka
 weary
 whack
