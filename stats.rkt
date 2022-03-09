@@ -112,6 +112,13 @@
   ;; filter-words :: RegExp -> [String] -> [String]
   (filter (curry regexp-match pattern) wordlist))
 
+(define (filter-words* pattern1 pattern2 wordlist)
+  ;; Chain two filters
+  ;; filter-words* :: RegExp -> [String] -> [String] -> [String]
+  (filter (curry regexp-match pattern2)
+          (filter (curry regexp-match pattern1)
+                  wordlist)))
+
 (define (remove-words v w)
   ;; Remove words in v from w
   ;; remove-words :: [String] -> [String] -> [String]
