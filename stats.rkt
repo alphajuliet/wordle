@@ -2,15 +2,17 @@
 ;; Wordle assistance
 ;; 2022-02
 
-(require threading
-         racket/hash)
-
 (provide read-words
          filter-words
+         filter-and
          remove-words
          rank-words
          re
          w wh)
+
+(require threading
+         racket/hash
+         rakeda)
 
 ;;----------------
 ;; Utilities
@@ -41,7 +43,20 @@
   ;; Create a regexp concatenated from a list of strings
   ;; e.g. (re x ".." y "s")
   ;; re :: [String] -> RegExp
-  (regexp (string-join elts "")))
+  (pregexp (string-join elts "")))
+
+(define (contains chars)
+  (~>> chars
+       my-string-split
+       (map (λ (ch) (format "(?=.*~a)" ch)))
+       (string-join _ "")
+       pregexp))
+
+(define (!contains str)
+  ;; Does not contain these characters
+  (~>> (list "[^" str "]{5}")
+       (string-join _ "")
+       pregexp))
 
 ;;----------------
 (define (read-words [fname "words5.txt"])
@@ -100,7 +115,7 @@
   ;; score :: List (Hash String Integer) -> Integer -> String -> Integer
   (hash-ref (list-ref ranking pos) letter))
 
-(define (score-word ranking word)
+(define/curry (score-word ranking word)
   ;; Score a word by rank at each position as per the given matrix
   ;; score-word List (Hash String Integer) -> String -> Integer
   (apply + (for/list ([pos (in-range 5)]
@@ -112,12 +127,21 @@
   ;; filter-words :: RegExp -> [String] -> [String]
   (filter (curry regexp-match pattern) wordlist))
 
-(define (filter-words* pattern1 pattern2 wordlist)
+#;(define (filter-words* pattern1 pattern2 wordlist)
   ;; Chain two filters
-  ;; filter-words* :: RegExp -> [String] -> [String] -> [String]
+  ;; filter-words* :: RegExp -> RegExp -> [String] -> [String]
   (filter (curry regexp-match pattern2)
           (filter (curry regexp-match pattern1)
                   wordlist)))
+
+(define (filter-and wordlist . patterns)
+  ;; Apply consecutive patterns to the wordlist from left to right
+  ;; e.g. (filter-on wh (contains "at") (!contains "rsel") "....y")
+  ;; filter-and :: [String] -> RegExp ... RegExp -> [String]
+  (foldl (λ (pattern acc)
+           (filter (curry regexp-match pattern) acc))
+         wordlist
+         patterns))
 
 (define (remove-words v w)
   ;; Remove words in v from w
@@ -130,7 +154,7 @@
   ;; rank-wordlist :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
     (~>> wordlist
-         (map (curry score-word r))
+         (map (score-word r))
          (create-hash wordlist)
          sort-by-value)))
 
