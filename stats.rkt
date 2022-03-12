@@ -49,6 +49,7 @@
   (~>> chars
        my-string-split
        (map (λ (ch) (format "(?=.*~a)" ch)))
+       (append _ '(".+"))
        (string-join _ "")
        pregexp))
 
@@ -159,7 +160,7 @@
          sort-by-value)))
 
 ;; Pre-load word list
-(define w (read-words "words5-no-plural.txt"))
+(define w (read-words "popular-words5.txt"))
 
 ;; Historical words
 ;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
