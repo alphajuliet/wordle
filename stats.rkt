@@ -1,14 +1,10 @@
 #lang racket
-;; Wordle assistance
+;; Wordle scoring and ranking
 ;; 2022-02
 
-(provide read-words
-         filter-words
-         filter-and
-         remove-words
-         rank-words
-         re
-         w wh)
+(provide my-string-split
+         read-words
+         rank-words)
 
 (require threading
          racket/hash
@@ -38,26 +34,6 @@
 ; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
 (define (hash-add . hs)
   (apply hash-union hs #:combine/key (λ (k v1 v2) (+ v1 v2))))
-
-(define (re . elts)
-  ;; Create a regexp concatenated from a list of strings
-  ;; e.g. (re x ".." y "s")
-  ;; re :: [String] -> RegExp
-  (pregexp (string-join elts "")))
-
-(define (contains chars)
-  (~>> chars
-       my-string-split
-       (map (λ (ch) (format "(?=.*~a)" ch)))
-       (append _ '(".+"))
-       (string-join _ "")
-       pregexp))
-
-(define (!contains str)
-  ;; Does not contain these characters
-  (~>> (list "[^" str "]{5}")
-       (string-join _ "")
-       pregexp))
 
 ;;----------------
 (define (read-words [fname "words5.txt"])
@@ -123,34 +99,6 @@
                       [letter (my-string-split word)])
              (score ranking pos letter))))
 
-;;----------------
-(define (filter-words pattern wordlist)
-  ;; filter-words :: RegExp -> [String] -> [String]
-  (filter (curry regexp-match pattern) wordlist))
-
-#;(define (filter-words* pattern1 pattern2 wordlist)
-  ;; Chain two filters
-  ;; filter-words* :: RegExp -> RegExp -> [String] -> [String]
-  (filter (curry regexp-match pattern2)
-          (filter (curry regexp-match pattern1)
-                  wordlist)))
-
-(define (filter-and wordlist . patterns)
-  ;; Apply consecutive patterns to the wordlist from left to right
-  ;; e.g. (filter-on wh (contains "at") (!contains "rsel") "....y")
-  ;; filter-and :: [String] -> RegExp ... RegExp -> [String]
-  (foldl (λ (pattern acc)
-           (filter (curry regexp-match pattern) acc))
-         wordlist
-         patterns))
-
-(define (remove-words v w)
-  ;; Remove words in v from w
-  ;; remove-words :: [String] -> [String] -> [String]
-  (let ([vs (list->set v)]
-        [ws (list->set w)])
-    (set->list (set-subtract ws vs))))
-
 (define (rank-words wordlist)
   ;; rank-wordlist :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
@@ -158,13 +106,5 @@
          (map (score-word r))
          (create-hash wordlist)
          sort-by-value)))
-
-;; Pre-load word list
-(define w (read-words "popular-words5.txt"))
-
-;; Historical words
-;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
-(define h (read-words "wordle-history.txt"))
-(define wh (remove-words h w))
 
 ;; The End
