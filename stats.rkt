@@ -7,25 +7,20 @@
          rank-words)
 
 (require threading
+         (only-in qi define-flow ☯)
          racket/hash
          rakeda)
 
 ;;----------------
 ;; Utilities
 
-(define (my-string-split s)
-  ;; Split a string into 1-char substrings, with no header or trailer
-  ;; (my-string-split "abc") => '("a" "b" "c")
-  ;; my-string-split :: String -> [String]
-  (~> s
-      (string-split "")
+(define-flow my-string-split
+  (~> (string-split "")
       rest
       (drop-right 1)))
 
-(define (create-hash ks vs)
-  ;; Create a hash from a list of keys and a list of values
-  ;; [a] -> [b] -> Hash a b
-  (~>> (map list ks vs)
+(define-flow create-hash
+  (~>> (map list)
        flatten
        (apply hash)))
 
@@ -43,24 +38,25 @@
     (λ () (for/list ([line (in-lines)])
             line))))
 
-(define (string-transpose lst)
+(define-flow string-transpose
   ;; Swap axes in a list of strings.
-  ;; e.g. (transpose '("abc" "def")) => '("ad" "be" "cf")
-  ;; transpose :: [String] -> [String]
-  (~>> lst
-       (map my-string-split)
+  ;; e.g. (string-transpose '("abc" "def")) => '("ad" "be" "cf")
+  ;; string-transpose :: [String] -> [String]
+  (~>> (map my-string-split)
        (apply map list)
-       (map (λ (lst) (string-join lst "")))))
+       (map (r/flip string-join ""))))
 
-(define (sort-by-key h)
+(define-flow sort-by-key
   ;; Sort by ascending key
   ;; sort-by-key :: Hash a b -> List (Pair a b)
-  (sort (hash->list h) string<? #:key car))
+  (~> hash->list
+      (sort string<? #:key car)))
 
-(define (sort-by-value h)
+(define-flow sort-by-value
   ;; Sort by descending value
   ;; sort-by-value :: Hash a b -> List (Pair a b)
-  (sort (hash->list h) > #:key cdr))
+  (~> hash->list
+      (sort > #:key cdr)))
 
 ;;----------------
 (define (count-letters word)
@@ -74,16 +70,14 @@
 (define (count-letters-wordlist wordlist)
   ;; Rank count of letters in decreasing order across all the words
   ;; count-letters-wordlist :: [String] -> Hash String Integer
-  (~> (foldl (λ (word h)
-               (hash-add h (count-letters word)))
-             (hash)
-             wordlist)))
+  (foldl (λ (word h)
+           (hash-add h (count-letters word)))
+         (hash)
+         wordlist))
 
-(define (rank-by-position wordlist)
-  ;; Count letters in each position in the words
+(define-flow rank-by-position
   ;; rank-by-position :: [String] -> List (Hash String Integer)
-  (~>> wordlist
-       string-transpose
+  (~>> string-transpose
        (map count-letters)))
 
 ;;----------------
@@ -100,7 +94,7 @@
              (score ranking pos letter))))
 
 (define (rank-words wordlist)
-  ;; rank-wordlist :: [String] -> List (Pair String Integer)
+  ;; rank-words :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
     (~>> wordlist
          (map (score-word r))

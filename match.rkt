@@ -5,7 +5,7 @@
 (provide filter-words
          filter-and)
 
-(require threading
+(require qi
          rakeda
          "./stats.rkt")
 
@@ -16,18 +16,16 @@
       (substring s 0 1)))
 
 ;;----------------
-(define (contains chars)
-  (~>> chars
-       my-string-split
-       (map (λ (ch) (format "(?=.*~a)" ch)))
-       (append _ '(".+"))
-       (string-join _ "")
-       pregexp))
+(define-flow contains
+  (~> my-string-split
+      (map (curry format "(?=.*~a)") _)
+      (append '(".+"))
+      (string-join "")
+      pregexp))
 
-(define (!contains str)
+(define-flow !contains
   ;; Does not contain these characters
-  (~>> str
-       (format "[^~a]{5}")
+  (~>> (format "[^~a]{5}")
        pregexp))
 
 (define (re . elts)
@@ -50,12 +48,10 @@
          wordlist
          patterns))
 
-(define (remove-words v w)
-  ;; Remove words in v from w
-  ;; remove-words :: [String] -> [String] -> [String]
-  (let ([vs (list->set v)]
-        [ws (list->set w)])
-    (set->list (set-subtract ws vs))))
+(define-flow remove-words
+  (~> (>< list->set)
+      set-subtract
+      set->list))
 
 ;;----------------
 ;; Pre-load word list
@@ -65,6 +61,6 @@
 ;; Historical words
 ;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
 (define h (read-words "wordle-history.txt"))
-(define wh (remove-words h w))
+(define wh (remove-words w h))
 
 ;; The End
