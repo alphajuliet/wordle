@@ -15,19 +15,21 @@
 ;; Utilities
 
 (define-flow my-string-split
+  ;; my-string-split :: String -> List String
   (~> (string-split "")
       rest
       (drop-right 1)))
 
 (define-flow create-hash
+  ;; create-hash :: (List a) -> (List b) -> (Hash a b)
   (~>> (map list)
        flatten
        (apply hash)))
 
+(define (hash-add . hs)
 ; Add the values in two hashes where the keys match. For unmatched keys, include the value.
 ;   (hash-add (hash 'a 1 'b 2 'c 3) (hash 'a 4 'b 5)) => (hash 'a 5 'b 7 'c 3)
 ; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
-(define (hash-add . hs)
   (apply hash-union hs #:combine/key (λ (k v1 v2) (+ v1 v2))))
 
 ;;----------------
@@ -100,5 +102,22 @@
          (map (score-word r))
          (create-hash wordlist)
          sort-by-value)))
+
+;;----------------
+;; Unit tests
+
+(module+ test
+
+  (require rackunit
+           rackunit/text-ui)
+
+  (define-test-suite stats-tests
+
+    (test-case "Simple tests"
+      (check-equal? (my-string-split "abc") '("a" "b" "c"))
+      (check-equal? (string-transpose '("abc" "def")) '("ad" "be" "cf"))
+      (check-equal? (hash "a" 1 "b" 2 "c" 3) (count-letters "cbacbc"))))
+
+  (run-tests stats-tests))
 
 ;; The End
