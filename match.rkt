@@ -63,4 +63,23 @@
 (define h (read-words "wordle-history.txt"))
 (define wh (remove-words w h))
 
+;;----------------
+;; Unit tests
+
+(module+ test
+
+  (require rackunit
+           rackunit/text-ui)
+
+  (define-test-suite match-tests
+
+    (test-case "Simple tests"
+      (check-equal? (string-first "abc") "a")
+      (check-equal? (string-first "") #f)
+
+      (check-equal? (contains "ab") #px"(?=.*a)(?=.*b).+")
+      (check-equal? (!contains "ab") #px"[^ab]{5}")))
+
+  (run-tests match-tests))
+
 ;; The End

@@ -96,6 +96,7 @@
              (score ranking pos letter))))
 
 (define (rank-words wordlist)
+  ;; Rank a word list by score
   ;; rank-words :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
     (~>> wordlist
