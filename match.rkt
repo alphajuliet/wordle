@@ -6,7 +6,6 @@
          filter-and)
 
 (require qi
-         rakeda
          "./stats.rkt")
 
 ;;----------------

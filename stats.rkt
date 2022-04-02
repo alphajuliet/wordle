@@ -6,10 +6,8 @@
          read-words
          rank-words)
 
-(require threading
-         (only-in qi define-flow ☯)
-         racket/hash
-         rakeda)
+(require racket/hash
+         qi)
 
 ;;----------------
 ;; Utilities
@@ -30,7 +28,8 @@
 ; Add the values in two hashes where the keys match. For unmatched keys, include the value.
 ;   (hash-add (hash 'a 1 'b 2 'c 3) (hash 'a 4 'b 5)) => (hash 'a 5 'b 7 'c 3)
 ; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
-  (apply hash-union hs #:combine/key (λ (k v1 v2) (+ v1 v2))))
+  (apply hash-union hs
+         #:combine/key (λ (k v1 v2) (+ v1 v2))))
 
 ;;----------------
 (define (read-words [fname "words5.txt"])
@@ -46,7 +45,7 @@
   ;; string-transpose :: [String] -> [String]
   (~>> (map my-string-split)
        (apply map list)
-       (map (r/flip string-join ""))))
+       (map (λ (x) (string-join x "")))))
 
 (define-flow sort-by-key
   ;; Sort by ascending key
@@ -61,21 +60,20 @@
       (sort > #:key cdr)))
 
 ;;----------------
-(define (count-letters word)
+(define-flow count-letters
   ;; Count each letter in a word
   ;; count-letters :: String -> Hash String Integer
-  (foldl (λ (letter h)
-           (hash-add h (hash letter 1)))
-         (hash)
-         (my-string-split word)))
+  (~>> my-string-split
+       (foldl (λ (letter h)
+            (hash-add h (hash letter 1)))
+          (hash))))
 
-(define (count-letters-wordlist wordlist)
+(define-flow count-letters-wordlist
   ;; Rank count of letters in decreasing order across all the words
   ;; count-letters-wordlist :: [String] -> Hash String Integer
-  (foldl (λ (word h)
-           (hash-add h (count-letters word)))
-         (hash)
-         wordlist))
+  (~>> (foldl (λ (word h)
+                (hash-add h (count-letters word)))
+              (hash))))
 
 (define-flow rank-by-position
   ;; rank-by-position :: [String] -> List (Hash String Integer)
@@ -88,7 +86,7 @@
   ;; score :: List (Hash String Integer) -> Integer -> String -> Integer
   (hash-ref (list-ref ranking pos) letter))
 
-(define/curry (score-word ranking word)
+(define (score-word ranking word)
   ;; Score a word by rank at each position as per the given matrix
   ;; score-word List (Hash String Integer) -> String -> Integer
   (apply + (for/list ([pos (in-range 5)]
@@ -96,11 +94,11 @@
              (score ranking pos letter))))
 
 (define (rank-words wordlist)
-  ;; Rank a word list by score
+  ;; Rank a word list in order
   ;; rank-words :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
-    (~>> wordlist
-         (map (score-word r))
+    (~>> (wordlist)
+         (map (curry score-word r))
          (create-hash wordlist)
          sort-by-value)))
 
