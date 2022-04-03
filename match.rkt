@@ -5,7 +5,7 @@
 (provide filter-words
          filter-and)
 
-(require qi
+(require threading
          "./stats.rkt")
 
 ;;----------------
@@ -15,17 +15,17 @@
       (substring s 0 1)))
 
 ;;----------------
-(define-flow contains
-  (~> my-string-split
-      (map (curry format "(?=.*~a)") _)
-      (append '(".+"))
-      (string-join "")
-      pregexp))
-
-(define-flow !contains
-  ;; Does not contain these characters
-  (~>> (format "[^~a]{5}")
+(define contains
+  (λ~> my-string-split
+       (map (curry format "(?=.*~a)") _)
+       (append '(".+"))
+       (string-join "")
        pregexp))
+
+(define !contains
+  ;; Does not contain these characters
+  (λ~>> (format "[^~a]{5}")
+        pregexp))
 
 (define (re . elts)
   ;; Create a regexp concatenated from a list of strings
@@ -47,10 +47,7 @@
          wordlist
          patterns))
 
-(define-flow remove-words
-  (~> (>< list->set)
-      set-subtract
-      set->list))
+(define list-subtract set-subtract)
 
 ;;----------------
 ;; Pre-load word list
@@ -60,7 +57,7 @@
 ;; Historical words
 ;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
 (define h (read-words "wordle-history.txt"))
-(define wh (remove-words w h))
+(define wh (list-subtract w h))
 
 ;;----------------
 ;; Unit tests
@@ -73,11 +70,11 @@
   (define-test-suite match-tests
 
     (test-case "Simple tests"
-      (check-equal? (string-first "abc") "a")
-      (check-equal? (string-first "") #f)
+               (check-equal? (string-first "abc") "a")
+               (check-equal? (string-first "") #f)
 
-      (check-equal? (contains "ab") #px"(?=.*a)(?=.*b).+")
-      (check-equal? (!contains "ab") #px"[^ab]{5}")))
+               (check-equal? (contains "ab") #px"(?=.*a)(?=.*b).+")
+               (check-equal? (!contains "ab") #px"[^ab]{5}")))
 
   (run-tests match-tests))
 

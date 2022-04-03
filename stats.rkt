@@ -7,27 +7,27 @@
          rank-words)
 
 (require racket/hash
-         qi)
+         threading)
 
 ;;----------------
 ;; Utilities
 
-(define-flow my-string-split
+(define my-string-split
   ;; my-string-split :: String -> List String
-  (~> (string-split "")
-      rest
-      (drop-right 1)))
+  (λ~> (string-split "")
+       rest
+       (drop-right 1)))
 
-(define-flow create-hash
+(define (create-hash k v)
   ;; create-hash :: (List a) -> (List b) -> (Hash a b)
-  (~>> (map list)
+  (~>> (map list k v)
        flatten
        (apply hash)))
 
 (define (hash-add . hs)
-; Add the values in two hashes where the keys match. For unmatched keys, include the value.
-;   (hash-add (hash 'a 1 'b 2 'c 3) (hash 'a 4 'b 5)) => (hash 'a 5 'b 7 'c 3)
-; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
+  ; Add the values in two hashes where the keys match. For unmatched keys, include the value.
+  ;   (hash-add (hash 'a 1 'b 2 'c 3) (hash 'a 4 'b 5)) => (hash 'a 5 'b 7 'c 3)
+  ; hash-add :: Hash a Number -> Hash a Number -> ... -> Hash a Number
   (apply hash-union hs
          #:combine/key (λ (k v1 v2) (+ v1 v2))))
 
@@ -39,46 +39,46 @@
     (λ () (for/list ([line (in-lines)])
             line))))
 
-(define-flow string-transpose
+(define string-transpose
   ;; Swap axes in a list of strings.
   ;; e.g. (string-transpose '("abc" "def")) => '("ad" "be" "cf")
   ;; string-transpose :: [String] -> [String]
-  (~>> (map my-string-split)
-       (apply map list)
-       (map (λ (x) (string-join x "")))))
+  (λ~>> (map my-string-split)
+        (apply map list)
+        (map (λ (x) (string-join x "")))))
 
-(define-flow sort-by-key
+(define sort-by-key
   ;; Sort by ascending key
   ;; sort-by-key :: Hash a b -> List (Pair a b)
-  (~> hash->list
-      (sort string<? #:key car)))
+  (λ~> hash->list
+       (sort string<? #:key car)))
 
-(define-flow sort-by-value
+(define sort-by-value
   ;; Sort by descending value
   ;; sort-by-value :: Hash a b -> List (Pair a b)
-  (~> hash->list
-      (sort > #:key cdr)))
+  (λ~> hash->list
+       (sort > #:key cdr)))
 
 ;;----------------
-(define-flow count-letters
+(define count-letters
   ;; Count each letter in a word
   ;; count-letters :: String -> Hash String Integer
-  (~>> my-string-split
-       (foldl (λ (letter h)
-            (hash-add h (hash letter 1)))
-          (hash))))
+  (λ~>> my-string-split
+        (foldl (λ (letter h)
+                 (hash-add h (hash letter 1)))
+               (hash))))
 
-(define-flow count-letters-wordlist
+(define count-letters-wordlist
   ;; Rank count of letters in decreasing order across all the words
   ;; count-letters-wordlist :: [String] -> Hash String Integer
-  (~>> (foldl (λ (word h)
-                (hash-add h (count-letters word)))
-              (hash))))
+  (λ~>> (foldl (λ (word h)
+                 (hash-add h (count-letters word)))
+               (hash))))
 
-(define-flow rank-by-position
+(define rank-by-position
   ;; rank-by-position :: [String] -> List (Hash String Integer)
-  (~>> string-transpose
-       (map count-letters)))
+  (λ~>> string-transpose
+        (map count-letters)))
 
 ;;----------------
 (define (score ranking pos letter)
@@ -97,7 +97,7 @@
   ;; Rank a word list in order
   ;; rank-words :: [String] -> List (Pair String Integer)
   (let ([r (rank-by-position wordlist)])
-    (~>> (wordlist)
+    (~>> wordlist
          (map (curry score-word r))
          (create-hash wordlist)
          sort-by-value)))
@@ -113,9 +113,10 @@
   (define-test-suite stats-tests
 
     (test-case "Simple tests"
-      (check-equal? (my-string-split "abc") '("a" "b" "c"))
-      (check-equal? (string-transpose '("abc" "def")) '("ad" "be" "cf"))
-      (check-equal? (hash "a" 1 "b" 2 "c" 3) (count-letters "cbacbc"))))
+               (check-equal? (my-string-split "abc") '("a" "b" "c"))
+               (check-equal? (string-transpose '("abc" "def")) '("ad" "be" "cf"))
+               (check-equal? (hash "a" 1 "b" 2 "c" 3) (count-letters "cbacbc"))
+               (check-equal? (create-hash '(a b c) '(1 2 3)) (hash 'a 1 'b 2 'c 3))))
 
   (run-tests stats-tests))
 
