@@ -2,8 +2,7 @@
 ;; Wordle filtering and matching
 ;; 2022-03-18
 
-(provide filter-words
-         filter-and)
+(provide (all-defined-out))
 
 (require threading
          "./stats.rkt")
@@ -31,21 +30,24 @@
   ;; Create a regexp concatenated from a list of strings
   ;; e.g. (re x ".." y "s")
   ;; re :: [String] -> RegExp
-  (pregexp (string-join elts "")))
+  (~> elts
+      (string-join "")
+      pregexp))
 
 ;;----------------
 (define (filter-words wordlist pattern)
   ;; filter-words :: [String] -> RegExp -> [String]
   (filter (curry regexp-match pattern) wordlist))
 
-(define (filter-and wordlist . patterns)
+(define (filter-on wordlist . patterns)
   ;; Apply consecutive patterns to the wordlist from left to right
   ;; e.g. (filter-on wh (contains "at") (!contains "rsel") "....y")
-  ;; filter-and :: [String] -> RegExp ... RegExp -> [String]
-  (foldl (λ (pattern acc)
-           (filter (curry regexp-match pattern) acc))
-         wordlist
-         patterns))
+  ;; filter-on :: [String] -> RegExp ... RegExp -> [String]
+  (~>> patterns
+       (foldl
+        (λ (pattern acc)
+          (filter (curry regexp-match pattern) acc))
+        wordlist)))
 
 (define list-subtract set-subtract)
 
@@ -58,24 +60,5 @@
 ;; From https://eagerterrier.github.io/previous-wordle-words/alphabetical.txt
 (define h (read-words "wordle-history.txt"))
 (define wh (list-subtract w h))
-
-;;----------------
-;; Unit tests
-
-(module+ test
-
-  (require rackunit
-           rackunit/text-ui)
-
-  (define-test-suite match-tests
-
-    (test-case "Simple tests"
-               (check-equal? (string-first "abc") "a")
-               (check-equal? (string-first "") #f)
-
-               (check-equal? (contains "ab") #px"(?=.*a)(?=.*b).+")
-               (check-equal? (!contains "ab") #px"[^ab]{5}")))
-
-  (run-tests match-tests))
 
 ;; The End

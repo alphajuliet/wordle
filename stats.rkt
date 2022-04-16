@@ -2,9 +2,7 @@
 ;; Wordle scoring and ranking
 ;; 2022-02
 
-(provide my-string-split
-         read-words
-         rank-words)
+(provide (all-defined-out))
 
 (require racket/hash
          threading)
@@ -101,23 +99,5 @@
          (map (curry score-word r))
          (create-hash wordlist)
          sort-by-value)))
-
-;;----------------
-;; Unit tests
-
-(module+ test
-
-  (require rackunit
-           rackunit/text-ui)
-
-  (define-test-suite stats-tests
-
-    (test-case "Simple tests"
-               (check-equal? (my-string-split "abc") '("a" "b" "c"))
-               (check-equal? (string-transpose '("abc" "def")) '("ad" "be" "cf"))
-               (check-equal? (hash "a" 1 "b" 2 "c" 3) (count-letters "cbacbc"))
-               (check-equal? (create-hash '(a b c) '(1 2 3)) (hash 'a 1 'b 2 'c 3))))
-
-  (run-tests stats-tests))
 
 ;; The End
