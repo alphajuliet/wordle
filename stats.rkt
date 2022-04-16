@@ -5,10 +5,18 @@
 (provide (all-defined-out))
 
 (require racket/hash
-         threading)
+         threading
+         )
 
 ;;----------------
 ;; Utilities
+;;
+
+(define (round-to n x) (* n (round (/ x n))))
+
+(define (normalise n lst)
+  ;; Normalise a numeric list relative to the given amount
+  (map (λ (x) (/ x n)) lst))
 
 (define my-string-split
   ;; my-string-split :: String -> List String
@@ -71,12 +79,17 @@
   ;; count-letters-wordlist :: [String] -> Hash String Integer
   (λ~>> (foldl (λ (word h)
                  (hash-add h (count-letters word)))
-               (hash))))
+               (hash))
+        sort-by-value))
 
 (define rank-by-position
   ;; rank-by-position :: [String] -> List (Hash String Integer)
   (λ~>> string-transpose
         (map count-letters)))
+
+(define max-score
+  (λ~>> (map (λ~>> hash-values (apply max)))
+        (apply +)))
 
 ;;----------------
 (define (score ranking pos letter)
@@ -94,9 +107,13 @@
 (define (rank-words wordlist)
   ;; Rank a word list in order
   ;; rank-words :: [String] -> List (Pair String Integer)
-  (let ([r (rank-by-position wordlist)])
+  (let* ([r (rank-by-position wordlist)]
+         [m (max-score r)])
     (~>> wordlist
          (map (curry score-word r))
+         (normalise m)
+         (map (curry * 100))
+         (map round)
          (create-hash wordlist)
          sort-by-value)))
 
