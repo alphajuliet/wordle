@@ -107,14 +107,17 @@
 (define (rank-words wordlist)
   ;; Rank a word list in order
   ;; rank-words :: [String] -> List (Pair String Integer)
-  (let* ([r (rank-by-position wordlist)]
-         [m (max-score r)])
-    (~>> wordlist
-         (map (curry score-word r))
-         (normalise m)
-         (map (curry * 100))
-         (map round)
-         (create-hash wordlist)
-         sort-by-value)))
+  (if (empty? wordlist)
+      '()
+      ;; else
+      (let* ([r (rank-by-position wordlist)]
+             [m (max-score r)])
+        (~>> wordlist
+             (map (curry score-word r))
+             (normalise m)
+             (map (curry * 100))
+             (map round)
+             (create-hash wordlist)
+             sort-by-value))))
 
 ;; The End
