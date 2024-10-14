@@ -5,8 +5,7 @@
 (provide (all-defined-out))
 
 (require racket/hash
-         threading
-         )
+         threading)
 
 ;;----------------
 ;; Utilities
@@ -38,13 +37,6 @@
          #:combine/key (λ (k v1 v2) (+ v1 v2))))
 
 ;;----------------
-(define (read-words [fname "words5.txt"])
-  ;; Read a file of words into a list
-  ;; read-words :: IO String -> [String]
-  (with-input-from-file fname
-    (λ () (for/list ([line (in-lines)])
-            line))))
-
 (define string-transpose
   ;; Swap axes in a list of strings.
   ;; e.g. (string-transpose '("abc" "def")) => '("ad" "be" "cf")

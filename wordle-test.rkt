@@ -3,12 +3,12 @@
 (require rackunit
          rackunit/text-ui
          "stats.rkt"
-         "match.rkt")
+         "main.rkt")
 
 (define-test-suite wordle-tests
 
   (test-case "Simple tests"
-             (check-equal? (normalise '(1 2 3 4)) '(1/4 1/2 3/4 1))
+             (check-equal? (normalise 4 '(1 2 3 4)) '(1/4 1/2 3/4 1))
              (check-equal? (my-string-split "abc") '("a" "b" "c"))
              (check-equal? (string-transpose '("abc" "def")) '("ad" "be" "cf"))
              (check-equal? (hash "a" 1 "b" 2 "c" 3) (count-letters "cbacbc"))
